@@ -1,3 +1,4 @@
+#查詢業務 A 的個性化資料
 from flask import Flask, jsonify
 
 app = Flask(__name__)
