@@ -1,4 +1,3 @@
-# user_service.py 
 from flask import Flask, jsonify
 import psycopg2
 
