@@ -1,4 +1,4 @@
-// clientA.js (Node.js 範例)
+// clientA.js 
 const axios = require('axios');
 
 async function getUserData(userId) {
