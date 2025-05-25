@@ -25,3 +25,44 @@
 引入數據服務層 (Data Service Layer)： 抽象數據訪問，將 JOIN 邏輯從業務代碼中剝離，或考慮使用聚合服務來組合來自不同數據源的數據。
 考慮使用 MQ (Message Queue) 或其他異步機制： 優化數據同步或後台操作，進一步解耦業務邏輯。
 這個專案將是我們系統架構演進中的關鍵一步，旨在構建一個更具彈性和可擴展性的數據基礎設施。
+
+
+# 方案1.介紹：引入 User-Service 服務層
+你提供的架構圖展示了一個針對現有資料庫瓶頸和耦合問題的解決方案，核心思想是引入一個User-Service (用戶服務) 層。
+
+現有問題回顧 (透過圖示隱含)：
+
+在舊的架構中，很可能各個 Client A、Client B、Client C（代表不同的業務單元或應用程式）都直接透過自己的「用戶數據訪問代碼」來查詢和操作 db-User 資料庫。正如之前討論的，這種直接訪問和 JOIN 操作導致了資料庫的緊密耦合和性能瓶頸。
+
+新架構方案說明：
+
+你的圖示清楚地展示了透過引入 User-Service 來解決這些問題：
+
+用戶服務 (User-Service)：
+
+這是一個獨立的、專門負責處理所有與「用戶數據」相關業務邏輯和資料庫操作的服務。
+它負責將 db-User 的複雜性（例如 SELECT JOIN 等）封裝在內部。
+User-Service 是唯一直接與 db-User 資料庫交互的元件，透過 SQL 語句進行數據查詢和更新。
+客戶端 (Client A, Client B, Client C)：
+
+這些客戶端（代表不同的業務系統或應用程式，如訂單系統、個人資料系統等）不再直接訪問 db-User。
+它們轉而透過 RPC (Remote Procedure Call) 的方式，遠程調用 User-Service 提供的介面（API）來獲取或修改用戶數據。
+每個客戶端內部仍然保有「用戶數據訪問代碼」，但這些代碼現在是用來呼叫 User-Service 的 RPC 介面，而不是直接操作資料庫。
+方案帶來的優勢：
+
+資料庫解耦 (Database Decoupling)：
+
+db-User 不再直接暴露給所有的客戶端，而是被 User-Service 隔離。
+客戶端現在只依賴於 User-Service 的介面，而不再關心數據在 db-User 中如何存儲、如何 JOIN，極大地降低了耦合度。
+單一職責與集中管理 (Single Responsibility & Centralized Management)：
+
+所有關於用戶數據的邏輯都集中在 User-Service 中，便於統一管理、維護和迭代。
+例如，如果用戶數據的數據模型發生變化，只需要修改 User-Service 內部邏輯，而無需修改所有客戶端。
+提高性能與可擴展性 (Improved Performance & Scalability)：
+
+User-Service 可以根據需要獨立進行擴展（例如，增加 User-Service 的實例數量）。
+User-Service 內部可以針對用戶數據的訪問進行性能優化，例如引入緩存、讀寫分離等，這些優化對客戶端是透明的。
+由於減少了客戶端直接對資料庫的 JOIN 操作，降低了資料庫的直接壓力。
+促進微服務架構 (Facilitating Microservices Architecture)：
+
+這個 User-Service 實際上就是一個典型的微服務。它為後續將整個單體應用拆分成更多獨立服務奠定了基礎。
